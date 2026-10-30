@@ -1,5 +1,6 @@
-# Public / documented job sources. No LinkedIn scraping.
-# Optional API keys are read from the environment; search still works without them.
+# Public / documented job sources. No LinkedIn or Naukri HTML scraping,
+# login bots, Easy Apply, or cookie sessions.
+# Optional API keys / feed URLs are read from the environment.
 
 user_agent: meghana-job-apply/0.1 (personal job search; respectful public API client)
 
@@ -41,3 +42,17 @@ adzuna:
 reed:
   enabled_if_env: [REED_API_KEY]
   keywords: security analyst penetration tester application security
+
+# LinkedIn and Naukri have no public candidate job-search API.
+# Default behavior: emit "open in browser" search URLs from the profile.
+# Live listing fetch happens only if LINKEDIN_JOBS_FEED_URL / NAUKRI_JOBS_FEED_URL
+# point at an RSS, Atom, or JSON feed she is allowed to GET.
+linkedin:
+  enabled: true
+  fetch_mode: open-in-browser
+  bengaluru_geo_id: "105214831"
+
+naukri:
+  enabled: true
+  fetch_mode: open-in-browser
+  city_slug: bangalore

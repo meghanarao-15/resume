@@ -7,6 +7,7 @@ from urllib.parse import quote_plus, urlencode
 from .html import strip_html
 from .http import env_ready, get_json
 from .models import Job
+from .portals import cookie_env_warning, fetch_optional_portal_feeds
 
 Fetcher = Callable[[dict[str, Any], str], list[Job]]
 
@@ -225,6 +226,16 @@ def _reed(config: dict[str, Any], ua: str) -> list[Job]:
     return jobs
 
 
+def _linkedin(config: dict[str, Any], ua: str) -> list[Job]:
+    """Optional RSS/JSON feed only. Guest HTML / cookie scrape is not implemented."""
+    return fetch_optional_portal_feeds(config, ua, only={"linkedin"})
+
+
+def _naukri(config: dict[str, Any], ua: str) -> list[Job]:
+    """Optional RSS/JSON feed only. Naukri HTML / cookie scrape is not implemented."""
+    return fetch_optional_portal_feeds(config, ua, only={"naukri"})
+
+
 FETCHERS: list[tuple[str, Fetcher]] = [
     ("greenhouse", _greenhouse),
     ("lever", _lever),
@@ -233,6 +244,8 @@ FETCHERS: list[tuple[str, Fetcher]] = [
     ("arbeitnow", _arbeitnow),
     ("adzuna", _adzuna),
     ("reed", _reed),
+    ("linkedin", _linkedin),
+    ("naukri", _naukri),
 ]
 
 
@@ -246,6 +259,9 @@ def fetch_jobs(
     allow = set(only) if only else None
     collected: list[Job] = []
     seen: set[str] = set()
+    cookie_note = cookie_env_warning()
+    if cookie_note and on_error:
+        on_error("portals", RuntimeError(cookie_note))
     for name, fn in FETCHERS:
         if allow is not None and name not in allow:
             continue

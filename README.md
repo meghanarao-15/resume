@@ -8,13 +8,14 @@ The original resume file in this repo was only a stub (`my resume`). The candida
 
 1. Loads the structured profile (skills, titles, locations).
 2. Fetches openings from **documented public APIs** (Greenhouse, Lever, Ashby, Remotive, Arbeitnow; optional Adzuna/Reed if you set keys).
-3. Scores each role against VAPT / AppSec / cloud / AI-security skills and prints **title, company, link, score, and reasons**.
-4. Drafts a cover letter + answers packet and **stops for your review**.
+3. Builds **LinkedIn and Naukri job-search URLs** from her target roles (open in the browser — those sites have no public candidate search API). Optional live listings only if `LINKEDIN_JOBS_FEED_URL` / `NAUKRI_JOBS_FEED_URL` point at an RSS/Atom/JSON feed she may GET.
+4. Scores live listings against VAPT / AppSec / cloud / AI-security skills and prints **title, company, link, score, and reasons**.
+5. Drafts a cover letter + answers packet and **stops for your review**.
 
 ## What this will not do
 
 - Mass-apply or auto-submit.
-- Log into LinkedIn, drive Easy Apply, solve CAPTCHAs, or bypass site terms.
+- Log into LinkedIn or Naukri, drive Easy Apply, solve CAPTCHAs, reuse session cookies, or scrape those sites.
 - Call any “apply” HTTP endpoint. Greenhouse/Lever/Ashby **job boards** are public read APIs; submitting an application still happens on the company’s site, by you.
 
 ## Setup
@@ -30,8 +31,11 @@ Optional keys (search works without them): copy [`.env.example`](.env.example).
 ## Usage
 
 ```bash
-# Rank live public listings (network)
+# Rank live public listings + print LinkedIn/Naukri search URLs (network for ATS APIs only)
 python3 -m job_apply search
+
+# LinkedIn/Naukri URLs only (plus any optional feeds), no Greenhouse fetch
+python3 -m job_apply search --source linkedin --source naukri
 
 # Same scoring, bundled fixtures only (no network)
 python3 -m job_apply search --offline
@@ -63,6 +67,15 @@ Packets land in `out/packets/<job-id>/`:
 ```bash
 python3 -m pytest -q
 ```
+
+## LinkedIn and Naukri
+
+| Mode | What happens |
+| --- | --- |
+| **open-in-browser** (default) | `search` writes `out/browser-searches.md` with LinkedIn `jobs/search` and Naukri public search URLs for her target roles in Bengaluru / India / remote. Open them yourself. |
+| **live-feed** (optional) | Set `LINKEDIN_JOBS_FEED_URL` or `NAUKRI_JOBS_FEED_URL` to an RSS, Atom, or JSON jobs feed you are allowed to GET. Those items are scored like other listings (`linkedin-feed` / `naukri-feed`). |
+
+Not used: `LINKEDIN_COOKIE` / Naukri session cookies (ignored if set). `LINKEDIN_ACCESS_TOKEN` and `NAUKRI_API_KEY` are documented placeholders — LinkedIn’s official Job Posting API cannot search candidate openings; Naukri has no public candidate search API.
 
 ## Profile notes
 

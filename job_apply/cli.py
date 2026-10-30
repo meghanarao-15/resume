@@ -12,8 +12,15 @@ from . import __version__
 from .apply import APPROVAL_FLAG, approve_job, draft_from_id
 from .matcher import rank_jobs
 from .profile import ROOT, load_profile
+from .portals import build_browser_searches
 from .sources import fetch_jobs
-from .store import DEFAULT_OUT, load_catalog, render_matches_md, write_matches
+from .store import (
+    DEFAULT_OUT,
+    load_catalog,
+    render_browser_searches_md,
+    render_matches_md,
+    write_matches,
+)
 
 DEFAULT_SOURCES = ROOT / "config" / "sources.yaml"
 SAMPLE_JOBS = ROOT / "data" / "sample_jobs.json"
@@ -76,31 +83,53 @@ def _load_sample_jobs():
     return [Job.from_dict(item) for item in raw]
 
 
+def _want_portals(source_filter: list[str] | None) -> bool:
+    if not source_filter:
+        return True
+    return any(name in {"linkedin", "naukri"} for name in source_filter)
+
+
 def cmd_search(args: argparse.Namespace) -> int:
     profile = load_profile()
+    config = _load_source_config()
+    searches: list[dict] = []
+    if _want_portals(args.sources):
+        searches = build_browser_searches(profile, config)
+        if args.sources:
+            allow = set(args.sources)
+            searches = [row for row in searches if row["portal"] in allow]
     if args.offline:
         jobs = _load_sample_jobs()
         errors: list[str] = []
     else:
         errors = []
-        config = _load_source_config()
         jobs = fetch_jobs(
             config,
             only=args.sources,
             on_error=lambda name, exc: errors.append(f"{name}: {exc}"),
         )
         if not jobs:
-            print("No live listings fetched; falling back to sample jobs.", file=sys.stderr)
-            jobs = _load_sample_jobs()
-            errors.append("live-fetch-empty")
+            portal_only = bool(args.sources) and set(args.sources) <= {"linkedin", "naukri"}
+            if portal_only:
+                errors.append("linkedin/naukri: no live feed (set LINKEDIN_JOBS_FEED_URL or NAUKRI_JOBS_FEED_URL); browser searches only")
+            else:
+                print("No live listings fetched; falling back to sample jobs.", file=sys.stderr)
+                jobs = _load_sample_jobs()
+                errors.append("live-fetch-empty")
     matches = rank_jobs(jobs, profile, limit=args.limit, min_score=args.min_score)
-    path = write_matches(matches, args.out)
+    path = write_matches(matches, args.out, browser_searches=searches)
     print(render_matches_md(matches))
+    if searches:
+        print(render_browser_searches_md(searches))
     if errors:
         print("Source warnings:", file=sys.stderr)
         for err in errors:
             print(f"  - {err}", file=sys.stderr)
-    print(f"Wrote {path} ({len(matches)} matches from {len(jobs)} listings).", file=sys.stderr)
+    print(
+        f"Wrote {path} ({len(matches)} live/sample matches from {len(jobs)} listings; "
+        f"{len(searches)} LinkedIn/Naukri browser searches).",
+        file=sys.stderr,
+    )
     print("Next: python3 -m job_apply draft <job_id>", file=sys.stderr)
     return 0
 
@@ -127,6 +156,9 @@ def cmd_show(args: argparse.Namespace) -> int:
             )
         )
     print(render_matches_md(matches))
+    searches = catalog.get("browser_searches") or []
+    if searches and not args.json:
+        print(render_browser_searches_md(searches))
     return 0
 
 

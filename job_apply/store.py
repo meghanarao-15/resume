@@ -15,18 +15,29 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def write_matches(matches: list[Match], out_dir: Path | None = None) -> Path:
+def write_matches(
+    matches: list[Match],
+    out_dir: Path | None = None,
+    browser_searches: list[dict[str, Any]] | None = None,
+) -> Path:
     dest = out_dir or DEFAULT_OUT
     dest.mkdir(parents=True, exist_ok=True)
     path = dest / "matches.json"
+    searches = browser_searches or []
     payload = {
         "generated_at": _now(),
         "count": len(matches),
         "matches": [m.to_dict() for m in matches],
         "jobs": {m.job.id: m.job.to_dict() for m in matches},
+        "browser_searches": searches,
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    (dest / "matches.md").write_text(render_matches_md(matches), encoding="utf-8")
+    md = render_matches_md(matches)
+    if searches:
+        md += "\n" + render_browser_searches_md(searches)
+    (dest / "matches.md").write_text(md, encoding="utf-8")
+    if searches:
+        (dest / "browser-searches.md").write_text(render_browser_searches_md(searches), encoding="utf-8")
     return path
 
 
@@ -44,6 +55,27 @@ def render_matches_md(matches: list[Match]) -> str:
         lines.append(
             f"| {match.score:.0f} | {match.job.title} | {match.job.company} | "
             f"{match.job.location} | {reasons} | {match.job.url} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_browser_searches_md(searches: list[dict[str, Any]]) -> str:
+    lines = [
+        "# LinkedIn and Naukri — open in the browser",
+        "",
+        "These are **not** live-fetched openings. LinkedIn and Naukri have no public",
+        "candidate job-search API this tool may call. Open each URL yourself, pick a",
+        "posting, then `python3 -m job_apply draft` is only for listings already in",
+        "`matches.json` (Greenhouse/Lever/etc., or an optional feed you configured).",
+        "",
+        "| Portal | Mode | Search | Location | URL |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for row in searches:
+        lines.append(
+            f"| {row.get('portal')} | {row.get('fetch_mode')} | {row.get('title')} | "
+            f"{row.get('location')} | {row.get('url')} |"
         )
     lines.append("")
     return "\n".join(lines)
