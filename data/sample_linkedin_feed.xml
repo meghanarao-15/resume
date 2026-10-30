@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <title>Example partner job feed</title>
+    <item>
+      <title>Senior Application Security Engineer</title>
+      <link>https://example.com/jobs/appsec-partner</link>
+      <description>OWASP, VAPT, cloud security, product security. Bengaluru.</description>
+      <author>Example Partner</author>
+    </item>
+  </channel>
+</rss>

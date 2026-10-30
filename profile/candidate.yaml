@@ -1,0 +1,156 @@
+# Structured candidate profile for job matching.
+# Sources (public, no login): LinkedIn public profile snippet, Sessionize,
+# IoT Show 2022 speaker page, Medium, GitHub repos. Resume repo had no CV file.
+
+name: Meghana Rao
+full_name: Meghana Bidarahalli Rao
+headline: Senior Security Analyst (VAPT, web/mobile/cloud, AI-tool security)
+location:
+  city: Bengaluru
+  region: Karnataka
+  country: India
+  country_code: IN
+  remote_ok: true
+  preferred:
+    - Bengaluru
+    - Bangalore
+    - India
+    - Remote
+    - Hybrid
+
+links:
+  linkedin: https://www.linkedin.com/in/meghana-rao-1860b4127/
+  github: https://github.com/meghanarao-15
+  sessionize: https://sessionize.com/meghana-rao/
+  medium: https://medium.com/@meghana.bidarahalli
+
+summary: >
+  Cybersecurity professional with ~5 years of hands-on security work, currently
+  Senior Security Analyst at Deep Armor in Bengaluru. Specializes in VAPT and
+  practical testing of web, mobile, cloud, network, IoT, and AI-driven tool
+  chains. Leads assessments, manages teams, and speaks on offensive and
+  defensive security. ISC2 Certified in Cybersecurity.
+
+# These titles also drive LinkedIn and Naukri "open in browser" search URLs.
+target_roles:
+  - Senior Security Analyst
+  - Security Engineer
+  - Application Security Engineer
+  - Product Security Engineer
+  - Penetration Tester
+  - Offensive Security Engineer
+  - VAPT Engineer
+  - Cloud Security Engineer
+  - AI Security Engineer
+  - Security Consultant
+
+avoid_roles:
+  - Sales
+  - Account Executive
+  - Recruiter
+  - Marketing
+  - Intern
+  - Campus
+
+experience:
+  - title: Senior Security Analyst
+    company: Deep Armor
+    location: Bengaluru, Karnataka, India
+    start: "2024-10"
+    end: present
+    highlights:
+      - Lead security assessments and oversee projects end to end
+      - VAPT across web, mobile, and emerging technologies
+      - Strengthen security processes and mentor assessment work
+  - title: Security Analyst
+    company: Deep Armor
+    location: Bengaluru, Karnataka, India
+    start: "2021-08"
+    end: "2024-09"
+    highlights:
+      - Web application, networking, and cloud security assessments
+      - Cybersecurity projects with a focus on big-data environments
+      - Practical exploitation and IoT security research (public speaking)
+  - title: Intern (Cybershikshaa mentorship)
+    company: Microsoft
+    location: Bengaluru, Karnataka, India
+    start: "2020-12"
+    end: "2021-06"
+    highlights:
+      - Industry mentorship on how threats are detected and tackled
+      - Hands-on work with Metasploit
+
+education:
+  - degree: Bachelor of Engineering (BE), Electronics and Communication
+    school: Rao Bahaddur Y Mahabaleshwarappa Engineering College, Bellary
+  - program: Computer Systems Networking and Telecommunications
+    school: Mohan's Networking Institute, Bengaluru
+  - school: Kendriya Vidyalaya Ballari
+
+certifications:
+  - ISC2 Certified in Cybersecurity (CC)
+  - Cybershikshaa (Data Security Council of India / Microsoft)
+  - Wicked6 2022 participation
+  - CCNA Network Security (course)
+  - CCNA Routing and Switching (course)
+
+skills:
+  weighted:
+    vapt: 5
+    penetration testing: 5
+    web application security: 5
+    mobile security: 4
+    cloud security: 4
+    network security: 4
+    application security: 4
+    product security: 3
+    iot security: 3
+    ai security: 4
+    llm security: 3
+    prompt injection: 3
+    vulnerability assessment: 4
+    metasploit: 3
+    compliance: 2
+    owasp: 3
+    red team: 3
+    threat detection: 2
+    big data security: 2
+  keywords:
+    - VAPT
+    - penetration testing
+    - web application security
+    - OWASP
+    - mobile security
+    - cloud security
+    - network security
+    - IoT security
+    - AI security
+    - prompt injection
+    - Metasploit
+    - vulnerability management
+    - application security
+    - product security
+    - ISC2
+
+communities:
+  - WiCyS India
+  - Security BSides Bangalore
+  - W3-CS
+  - OWASP AppSec Days India
+
+talks_and_writing:
+  - title: "From Prompt to Payload: Defending AI-Driven Tools in Adversarial Settings"
+    venue: Sessionize / community talks
+  - title: Practical exploitation of IoT security vulnerabilities
+    venue: IoT Show India 2022
+  - title: Cloud security compliance
+    venue: Medium
+  - title: Open-source supply-chain security (Grep takeover)
+    venue: Medium
+
+sources:
+  - https://www.linkedin.com/in/meghana-rao-1860b4127/
+  - https://sessionize.com/meghana-rao/
+  - https://www.iotshow.in/iotshow-2022-2/meghana-bidarahalli-2/
+  - https://medium.com/@meghana.bidarahalli
+  - https://github.com/meghanarao-15/resume

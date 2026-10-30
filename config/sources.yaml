@@ -1,0 +1,58 @@
+# Public / documented job sources. No LinkedIn or Naukri HTML scraping,
+# login bots, Easy Apply, or cookie sessions.
+# Optional API keys / feed URLs are read from the environment.
+
+user_agent: meghana-job-apply/0.1 (personal job search; respectful public API client)
+
+greenhouse_boards:
+  - cloudflare
+  - gitlab
+  - datadog
+  - elastic
+  - okta
+  - mongodb
+  - stripe
+  - twilio
+  - figma
+  - anthropic
+
+lever_companies:
+  - palantir
+
+ashby_boards:
+  - openai
+  - linear
+  - notion
+  - vercel
+
+remotive:
+  enabled: true
+  search: security
+
+arbeitnow:
+  enabled: true
+
+# Optional paid/keyed APIs — skipped unless env vars are set.
+adzuna:
+  enabled_if_env: [ADZUNA_APP_ID, ADZUNA_APP_KEY]
+  country: in
+  what: security analyst OR penetration tester OR application security
+  where: Bangalore
+
+reed:
+  enabled_if_env: [REED_API_KEY]
+  keywords: security analyst penetration tester application security
+
+# LinkedIn and Naukri have no public candidate job-search API.
+# Default behavior: emit "open in browser" search URLs from the profile.
+# Live listing fetch happens only if LINKEDIN_JOBS_FEED_URL / NAUKRI_JOBS_FEED_URL
+# point at an RSS, Atom, or JSON feed she is allowed to GET.
+linkedin:
+  enabled: true
+  fetch_mode: open-in-browser
+  bengaluru_geo_id: "105214831"
+
+naukri:
+  enabled: true
+  fetch_mode: open-in-browser
+  city_slug: bangalore

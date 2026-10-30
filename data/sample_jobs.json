@@ -1,0 +1,52 @@
+[
+  {
+    "id": "sample:vapt-1",
+    "source": "sample",
+    "title": "Senior Security Analyst — VAPT",
+    "company": "Deep Armor Peer Co",
+    "url": "https://example.com/jobs/vapt-senior",
+    "location": "Bengaluru, India",
+    "description": "Lead web application penetration testing, mobile security assessments, cloud security reviews, OWASP, Metasploit, vulnerability management, and client reporting.",
+    "extra": {}
+  },
+  {
+    "id": "sample:appsec-1",
+    "source": "sample",
+    "title": "Application Security Engineer",
+    "company": "Example Cloud",
+    "url": "https://example.com/jobs/appsec",
+    "location": "Remote — India",
+    "description": "Product security, SAST/DAST, OWASP ASVS, threat modeling, and secure SDLC for web and API services. Bonus: AI/LLM security and prompt injection testing.",
+    "extra": {}
+  },
+  {
+    "id": "sample:sales-1",
+    "source": "sample",
+    "title": "Enterprise Account Executive",
+    "company": "Security Vendor Sales",
+    "url": "https://example.com/jobs/sales",
+    "location": "Bengaluru",
+    "description": "Sell enterprise software licenses. Quota carrying sales role, not a practitioner role.",
+    "extra": {}
+  },
+  {
+    "id": "sample:intern-1",
+    "source": "sample",
+    "title": "Cybersecurity Intern",
+    "company": "Campus Labs",
+    "url": "https://example.com/jobs/intern",
+    "location": "Remote",
+    "description": " intern program for students. Light vulnerability scanning.",
+    "extra": {}
+  },
+  {
+    "id": "sample:nurse-1",
+    "source": "sample",
+    "title": "Registered Nurse",
+    "company": "Hospital",
+    "url": "https://example.com/jobs/rn",
+    "location": "London",
+    "description": "Patient care. No information security work.",
+    "extra": {}
+  }
+]

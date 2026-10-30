@@ -1,0 +1,24 @@
+{
+  "id": "naukri:281026033864",
+  "title": "Technical Lead - Penetration Testing",
+  "company": "Happiest Minds Technologies",
+  "url": "https://www.naukri.com/job-listings-technical-lead-penetration-testing-happiest-minds-technologies-bengaluru-5-to-8-years-281026033864?src=simjobsjd_rt",
+  "location": "Bengaluru",
+  "source": "naukri",
+  "score": 100.0,
+  "reasons": [
+    "Title aligns with target security roles: penetration",
+    "Skill overlap: vapt, penetration testing, application security, ai security, llm security, prompt injection",
+    "Location lists India / Bengaluru",
+    "Seniority is a peer/step-up from current title"
+  ],
+  "skill_hits": [
+    "vapt",
+    "penetration testing",
+    "application security",
+    "ai security",
+    "llm security",
+    "prompt injection",
+    "owasp"
+  ]
+}

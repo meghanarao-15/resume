@@ -1,0 +1,257 @@
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+from . import __version__
+from .apply import APPROVAL_FLAG, approve_job, draft_from_id
+from .matcher import score_job, rank_jobs
+from .models import Job
+from .profile import ROOT, load_profile
+from .portals import build_browser_searches
+from .sources import fetch_jobs
+from .store import (
+    DEFAULT_OUT,
+    load_catalog,
+    render_browser_searches_md,
+    render_matches_md,
+    write_matches,
+)
+
+DEFAULT_SOURCES = ROOT / "config" / "sources.yaml"
+SAMPLE_JOBS = ROOT / "data" / "sample_jobs.json"
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="job_apply",
+        description=(
+            "Fetch public job listings, score them against Meghana's profile, "
+            "and draft apply packets. Never submits without an explicit per-job approval, "
+            "and does not log into LinkedIn or click Easy Apply."
+        ),
+    )
+    parser.add_argument("--version", action="version", version=__version__)
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    search = sub.add_parser("search", help="Fetch openings and rank matches")
+    search.add_argument("--offline", action="store_true", help="Score bundled sample jobs only")
+    search.add_argument("--limit", type=int, default=25)
+    search.add_argument("--min-score", type=float, default=35.0)
+    search.add_argument("--source", action="append", dest="sources", help="Restrict to source name(s)")
+    search.add_argument("--out", type=Path, default=DEFAULT_OUT)
+
+    sub.add_parser("show", help="Print last ranked matches")
+    show = sub.choices["show"]
+    show.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    show.add_argument("--json", action="store_true")
+
+    record = sub.add_parser(
+        "record",
+        help="Score one posting you already have (URL + title/company) and add it to matches.json",
+    )
+    record.add_argument("--url", required=True)
+    record.add_argument("--title", required=True)
+    record.add_argument("--company", required=True)
+    record.add_argument("--location", default="")
+    record.add_argument("--id", dest="job_id", default="")
+    record.add_argument("--source", default="manual")
+    record.add_argument("--description", default="")
+    record.add_argument("--description-file", type=Path)
+    record.add_argument("--out", type=Path, default=DEFAULT_OUT)
+
+    draft = sub.add_parser("draft", help="Write a review packet for one job id")
+    draft.add_argument("job_id")
+    draft.add_argument("--out", type=Path, default=DEFAULT_OUT)
+
+    approve = sub.add_parser(
+        "approve",
+        help="Record that you reviewed this one job (does not submit the application)",
+    )
+    approve.add_argument("job_id")
+    approve.add_argument(APPROVAL_FLAG, dest="confirmed", action="store_true")
+    approve.add_argument("--out", type=Path, default=DEFAULT_OUT)
+
+    batch = sub.add_parser(
+        "batch-review",
+        help="List a small set of job ids you may confirm together after reading each packet",
+    )
+    batch.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    batch.add_argument("--limit", type=int, default=5)
+    return parser
+
+
+def _load_source_config() -> dict[str, Any]:
+    with DEFAULT_SOURCES.open(encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
+def _load_sample_jobs():
+    from .models import Job
+
+    raw = json.loads(SAMPLE_JOBS.read_text(encoding="utf-8"))
+    return [Job.from_dict(item) for item in raw]
+
+
+def _want_portals(source_filter: list[str] | None) -> bool:
+    if not source_filter:
+        return True
+    return any(name in {"linkedin", "naukri"} for name in source_filter)
+
+
+def cmd_search(args: argparse.Namespace) -> int:
+    profile = load_profile()
+    config = _load_source_config()
+    searches: list[dict] = []
+    if _want_portals(args.sources):
+        searches = build_browser_searches(profile, config)
+        if args.sources:
+            allow = set(args.sources)
+            searches = [row for row in searches if row["portal"] in allow]
+    if args.offline:
+        jobs = _load_sample_jobs()
+        errors: list[str] = []
+    else:
+        errors = []
+        jobs = fetch_jobs(
+            config,
+            only=args.sources,
+            on_error=lambda name, exc: errors.append(f"{name}: {exc}"),
+        )
+        if not jobs:
+            portal_only = bool(args.sources) and set(args.sources) <= {"linkedin", "naukri"}
+            if portal_only:
+                errors.append("linkedin/naukri: no live feed (set LINKEDIN_JOBS_FEED_URL or NAUKRI_JOBS_FEED_URL); browser searches only")
+            else:
+                print("No live listings fetched; falling back to sample jobs.", file=sys.stderr)
+                jobs = _load_sample_jobs()
+                errors.append("live-fetch-empty")
+    matches = rank_jobs(jobs, profile, limit=args.limit, min_score=args.min_score)
+    path = write_matches(matches, args.out, browser_searches=searches)
+    print(render_matches_md(matches))
+    if searches:
+        print(render_browser_searches_md(searches))
+    if errors:
+        print("Source warnings:", file=sys.stderr)
+        for err in errors:
+            print(f"  - {err}", file=sys.stderr)
+    print(
+        f"Wrote {path} ({len(matches)} live/sample matches from {len(jobs)} listings; "
+        f"{len(searches)} LinkedIn/Naukri browser searches).",
+        file=sys.stderr,
+    )
+    print("Next: python3 -m job_apply draft <job_id>", file=sys.stderr)
+    return 0
+
+
+def cmd_record(args: argparse.Namespace) -> int:
+    from .store import upsert_match
+
+    profile = load_profile()
+    description = args.description or ""
+    if args.description_file:
+        description = args.description_file.read_text(encoding="utf-8")
+    job_id = args.job_id or f"{args.source}:{args.url}"
+    job = Job(
+        id=job_id,
+        source=args.source,
+        title=args.title,
+        company=args.company,
+        url=args.url,
+        location=args.location,
+        description=description,
+        extra={"fetch_mode": "public-page-or-url-metadata"},
+    )
+    match = score_job(job, profile)
+    path = upsert_match(match, args.out)
+    print(render_matches_md([match]))
+    print(
+        f"Recorded {job.id} (score {match.score:.0f}) in {path}. "
+        f"Next: python3 -m job_apply draft {job.id}",
+        file=sys.stderr,
+    )
+    return 0
+
+
+def cmd_show(args: argparse.Namespace) -> int:
+    catalog = load_catalog(args.out)
+    if args.json:
+        print(json.dumps(catalog["matches"], indent=2))
+        return 0
+    from .models import Job, Match
+
+    matches = []
+    jobs = catalog.get("jobs") or {}
+    for row in catalog.get("matches") or []:
+        job = Job.from_dict(jobs[row["id"]])
+        matches.append(
+            Match(
+                job=job,
+                score=row["score"],
+                reasons=row["reasons"],
+                skill_hits=row.get("skill_hits") or [],
+                title_fit=row.get("title_fit", False),
+                location_fit=row.get("location_fit", False),
+            )
+        )
+    print(render_matches_md(matches))
+    searches = catalog.get("browser_searches") or []
+    if searches and not args.json:
+        print(render_browser_searches_md(searches))
+    return 0
+
+
+def cmd_draft(args: argparse.Namespace) -> int:
+    profile = load_profile()
+    folder = draft_from_id(profile, args.job_id, args.out)
+    print(f"Packet ready for YOUR review (not submitted):\n  {folder}")
+    print("Edit cover-letter.md, then apply on the company site.")
+    print(f"After you submit yourself: python3 -m job_apply approve {args.job_id} {APPROVAL_FLAG}")
+    return 0
+
+
+def cmd_approve(args: argparse.Namespace) -> int:
+    try:
+        path = approve_job(args.job_id, confirmed=args.confirmed, out_dir=args.out)
+    except PermissionError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    print(
+        f"Recorded human approval for {args.job_id} in {path}. "
+        "No application was posted; use the packet checklist to submit on the official form."
+    )
+    return 0
+
+
+def cmd_batch_review(args: argparse.Namespace) -> int:
+    catalog = load_catalog(args.out)
+    rows = (catalog.get("matches") or [])[: args.limit]
+    print("Small batch for confirmation. Read each posting AND packet before approving.\n")
+    for row in rows:
+        print(f"- {row['id']}")
+        print(f"  {row['score']:.0f}  {row['title']} @ {row['company']}")
+        print(f"  {row['url']}")
+        print(f"  python3 -m job_apply draft {row['id']}")
+        print(f"  python3 -m job_apply approve {row['id']} {APPROVAL_FLAG}")
+        print()
+    print("Approvals are per job. There is no command that applies to all of these at once.")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    handlers = {
+        "search": cmd_search,
+        "record": cmd_record,
+        "show": cmd_show,
+        "draft": cmd_draft,
+        "approve": cmd_approve,
+        "batch-review": cmd_batch_review,
+    }
+    return handlers[args.cmd](args)
