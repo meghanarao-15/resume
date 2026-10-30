@@ -81,6 +81,42 @@ def render_browser_searches_md(searches: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def upsert_match(
+    match: Match,
+    out_dir: Path | None = None,
+    browser_searches: list[dict[str, Any]] | None = None,
+) -> Path:
+    dest = out_dir or DEFAULT_OUT
+    dest.mkdir(parents=True, exist_ok=True)
+    existing: list[Match] = []
+    searches = browser_searches or []
+    path = dest / "matches.json"
+    if path.exists():
+        catalog = json.loads(path.read_text(encoding="utf-8"))
+        if browser_searches is None:
+            searches = catalog.get("browser_searches") or []
+        jobs = catalog.get("jobs") or {}
+        for row in catalog.get("matches") or []:
+            if row.get("id") == match.job.id:
+                continue
+            raw = jobs.get(row["id"])
+            if not raw:
+                continue
+            existing.append(
+                Match(
+                    job=Job.from_dict(raw),
+                    score=row["score"],
+                    reasons=row.get("reasons") or [],
+                    skill_hits=row.get("skill_hits") or [],
+                    title_fit=row.get("title_fit", False),
+                    location_fit=row.get("location_fit", False),
+                )
+            )
+    existing.append(match)
+    existing.sort(key=lambda item: item.score, reverse=True)
+    return write_matches(existing, dest, searches)
+
+
 def load_catalog(out_dir: Path | None = None) -> dict[str, Any]:
     path = (out_dir or DEFAULT_OUT) / "matches.json"
     if not path.exists():

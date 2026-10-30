@@ -43,8 +43,9 @@ python3 -m job_apply search --offline
 # Re-print the last ranking
 python3 -m job_apply show
 
-# Draft materials for ONE job id from the ranking
-python3 -m job_apply draft '<job-id>'
+# Score a single posting you already have (no scrape). Then draft a packet.
+python3 -m job_apply record --url 'https://...' --title '...' --company '...' --location 'Bengaluru' --source naukri --id 'naukri:123' --description-file data/jobs/example.md
+python3 -m job_apply draft 'naukri:123'
 
 # After you have read the posting and packet, record that you confirmed this job.
 # This still does not submit an application.

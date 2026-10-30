@@ -10,7 +10,8 @@ import yaml
 
 from . import __version__
 from .apply import APPROVAL_FLAG, approve_job, draft_from_id
-from .matcher import rank_jobs
+from .matcher import score_job, rank_jobs
+from .models import Job
 from .profile import ROOT, load_profile
 from .portals import build_browser_searches
 from .sources import fetch_jobs
@@ -49,6 +50,20 @@ def build_parser() -> argparse.ArgumentParser:
     show = sub.choices["show"]
     show.add_argument("--out", type=Path, default=DEFAULT_OUT)
     show.add_argument("--json", action="store_true")
+
+    record = sub.add_parser(
+        "record",
+        help="Score one posting you already have (URL + title/company) and add it to matches.json",
+    )
+    record.add_argument("--url", required=True)
+    record.add_argument("--title", required=True)
+    record.add_argument("--company", required=True)
+    record.add_argument("--location", default="")
+    record.add_argument("--id", dest="job_id", default="")
+    record.add_argument("--source", default="manual")
+    record.add_argument("--description", default="")
+    record.add_argument("--description-file", type=Path)
+    record.add_argument("--out", type=Path, default=DEFAULT_OUT)
 
     draft = sub.add_parser("draft", help="Write a review packet for one job id")
     draft.add_argument("job_id")
@@ -134,6 +149,35 @@ def cmd_search(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_record(args: argparse.Namespace) -> int:
+    from .store import upsert_match
+
+    profile = load_profile()
+    description = args.description or ""
+    if args.description_file:
+        description = args.description_file.read_text(encoding="utf-8")
+    job_id = args.job_id or f"{args.source}:{args.url}"
+    job = Job(
+        id=job_id,
+        source=args.source,
+        title=args.title,
+        company=args.company,
+        url=args.url,
+        location=args.location,
+        description=description,
+        extra={"fetch_mode": "public-page-or-url-metadata"},
+    )
+    match = score_job(job, profile)
+    path = upsert_match(match, args.out)
+    print(render_matches_md([match]))
+    print(
+        f"Recorded {job.id} (score {match.score:.0f}) in {path}. "
+        f"Next: python3 -m job_apply draft {job.id}",
+        file=sys.stderr,
+    )
+    return 0
+
+
 def cmd_show(args: argparse.Namespace) -> int:
     catalog = load_catalog(args.out)
     if args.json:
@@ -204,6 +248,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     handlers = {
         "search": cmd_search,
+        "record": cmd_record,
         "show": cmd_show,
         "draft": cmd_draft,
         "approve": cmd_approve,

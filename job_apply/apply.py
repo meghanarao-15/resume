@@ -24,14 +24,12 @@ def _bullets(profile: dict[str, Any]) -> list[str]:
 def draft_cover_letter(profile: dict[str, Any], job: Job, match: dict[str, Any]) -> str:
     name = profile.get("full_name") or profile.get("name")
     hits = ", ".join(match.get("skill_hits") or []) or "security assessment work"
-    reasons = " ".join(match.get("reasons") or [])
+    loc = job.location or "your location"
     return f"""Dear {job.company} hiring team,
 
-I am {name}, a Senior Security Analyst at Deep Armor in Bengaluru. I am writing about the {job.title} role.
+I am {name}, a Senior Security Analyst at Deep Armor in Bengaluru. I am writing about the {job.title} role ({loc}).
 
-My recent work is hands-on VAPT and security assessment across web, mobile, cloud, and emerging AI tool chains, including leading assessments and taking projects from scoping through reporting. That maps to this posting because: {reasons}
-
-Most relevant overlap: {hits}.
+My recent work is hands-on VAPT and security assessment across web, mobile, cloud, and emerging AI tool chains, including leading assessments and taking projects from scoping through reporting. That overlaps this posting on: {hits}.
 
 I also speak and write in public (WiCyS, Wicked6, IoT Show, OWASP community, Medium) on practical exploitation, IoT security, cloud compliance, and defending AI-driven tools against prompt injection and tool-chain abuse.
 
@@ -53,18 +51,38 @@ I am a Senior Security Analyst focused on VAPT and practical testing of web, mob
 ## Work authorization / location
 Based in {loc}, India. Open to Bengaluru on-site/hybrid and remote roles that hire in India. Confirm visa/work-auth language on the posting before applying.
 
-## Notice period
-Confirm current Deep Armor notice period before stating a date.
+## Current company
+Deep Armor (confirm the exact legal entity name you use on Naukri). Do not list a different employer.
 
-## Salary
-Do not auto-fill. Decide per company.
+## Notice period
+FILL IN — confirm your Deep Armor notice period (days/months) before typing it on Naukri. Do not guess.
+
+## Current CTC / expected CTC
+FILL IN — Naukri will ask. Do not auto-fill. Public salary hints on this posting are not an offer.
 
 ## How did you hear about us?
-Company careers page / public job board ({job.source}), found via a personal matcher against my skills — not a mass-apply bot.
+Naukri job listing / company careers page ({job.source}). Not a mass-apply bot.
 """
 
 
 def apply_checklist(job: Job) -> str:
+    if job.source.startswith("naukri"):
+        return f"""# How to apply on Naukri (human-only)
+
+This tool does **not** submit applications and does not log into Naukri.
+
+1. Open the posting while logged in as yourself: {job.url}
+2. Re-read the full description, experience band, and any questions Naukri shows.
+3. Edit `cover-letter.md` and `answers.md` so they sound like you.
+4. Fill Naukri profile fields yourself: notice period, current/expected CTC, current company, and experience. Do not guess.
+5. Attach your resume (PDF). This repo does not bundle a CV file.
+6. Paste or upload the cover letter only after you have edited it. Click Apply yourself.
+7. Record the outcome locally (still not a submit):
+
+   `python3 -m job_apply approve {job.id} {APPROVAL_FLAG}`
+
+Do not paste Naukri passwords or session cookies into this tool.
+"""
     return f"""# How to apply (human-only)
 
 This tool does **not** submit applications. There is no legitimate public “apply for me”
