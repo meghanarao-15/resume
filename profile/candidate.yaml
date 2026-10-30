@@ -23,7 +23,6 @@ links:
   github: https://github.com/meghanarao-15
   sessionize: https://sessionize.com/meghana-rao/
   medium: https://medium.com/@meghana.bidarahalli
-  governance_calendar: https://meghanarao-15.github.io/governance-calendar/
 
 summary: >
   Cybersecurity professional with ~5 years of hands-on security work, currently
@@ -110,12 +109,6 @@ skills:
     prompt injection: 3
     vulnerability assessment: 4
     metasploit: 3
-    siem: 3
-    edr: 2
-    dlp: 2
-    active directory: 2
-    firewall: 2
-    governance: 3
     compliance: 2
     owasp: 3
     red team: 3
@@ -133,14 +126,9 @@ skills:
     - AI security
     - prompt injection
     - Metasploit
-    - SIEM
-    - EDR
-    - DLP
-    - Active Directory
     - vulnerability management
     - application security
     - product security
-    - governance
     - ISC2
 
 communities:
@@ -158,13 +146,10 @@ talks_and_writing:
     venue: Medium
   - title: Open-source supply-chain security (Grep takeover)
     venue: Medium
-  - title: Cybersecurity governance activity calendar (firewall, AD, proxy, AV/EDR, SIEM, DLP)
-    venue: GitHub
 
 sources:
   - https://www.linkedin.com/in/meghana-rao-1860b4127/
   - https://sessionize.com/meghana-rao/
   - https://www.iotshow.in/iotshow-2022-2/meghana-bidarahalli-2/
   - https://medium.com/@meghana.bidarahalli
-  - https://github.com/meghanarao-15/governance-calendar
   - https://github.com/meghanarao-15/resume

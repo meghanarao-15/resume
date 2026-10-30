@@ -1,6 +1,6 @@
 from job_apply.matcher import rank_jobs, score_job
 from job_apply.models import Job
-from job_apply.profile import load_profile
+from job_apply.profile import load_profile, skill_weights
 
 
 def _job(**kwargs) -> Job:
@@ -24,6 +24,36 @@ def test_profile_loads():
     assert "VAPT" in " ".join(profile["skills"]["keywords"])
 
 
+def test_governance_domains_are_not_used_for_matching():
+    profile = load_profile()
+    banned = {
+        "siem",
+        "edr",
+        "dlp",
+        "active directory",
+        "firewall",
+        "governance",
+        "web proxy",
+        "av/edr",
+        "proxy",
+    }
+    weights = set(skill_weights(profile))
+    keywords = {k.lower() for k in profile["skills"]["keywords"]}
+    blob = str(profile.get("talks_and_writing") or "").lower()
+    assert not (banned & weights)
+    assert not (banned & keywords)
+    match = score_job(
+        _job(
+            title="SIEM Engineer",
+            location="Bengaluru",
+            description="SIEM EDR DLP firewall Active Directory web proxy AV/EDR governance",
+        ),
+        profile,
+    )
+    assert not (banned & set(match.skill_hits))
+    assert "governance activity calendar" not in blob
+
+
 def test_vapt_outscores_sales_and_unrelated():
     profile = load_profile()
     vapt = _job(
@@ -32,7 +62,7 @@ def test_vapt_outscores_sales_and_unrelated():
         location="Bengaluru",
         description="web application security mobile security cloud security OWASP",
     )
-    sales = _job(id="s", title="Enterprise Account Executive", location="Bengaluru", description="SIEM EDR sales")
+    sales = _job(id="s", title="Enterprise Account Executive", location="Bengaluru", description="enterprise software sales")
     nurse = _job(id="n", title="Registered Nurse", location="London", description="patient care")
     ranked = rank_jobs([nurse, sales, vapt], profile, min_score=0, limit=10)
     assert ranked[0].job.id == "v"
